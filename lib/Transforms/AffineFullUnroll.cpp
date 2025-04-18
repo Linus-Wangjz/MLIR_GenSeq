@@ -1,4 +1,4 @@
-#include "lib/Transform/Affine/AffineFullUnroll.h"
+#include "../../include/AffineFullUnroll.h"
 
 namespace mlir {
 namespace tutorial {
