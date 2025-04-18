@@ -1,4 +1,4 @@
-#include "lib/Transform/Affine/AffineFullUnroll.h"
+#include "include/AffineFullUnroll.h"
 #include "mlir/include/mlir/InitAllDialects.h"
 #include "mlir/include/mlir/Pass/PassManager.h"
 #include "mlir/include/mlir/Pass/PassRegistry.h"

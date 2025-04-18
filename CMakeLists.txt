@@ -17,4 +17,11 @@ include(HandleLLVMOptions)
 
 include_directories(${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
 
-add_executable(test-opt tools/test-opt.cpp)
+add_executable(tutorial-opt tools/tutorial-opt.cpp)
+target_link_libraries(
+  tutorial-opt
+  MLIRIR
+  MLIRParser
+  MLIRFuncDialect
+  MLIRArithDialect
+)
