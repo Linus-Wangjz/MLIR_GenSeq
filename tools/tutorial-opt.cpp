@@ -8,6 +8,7 @@ int main(int argc, char **argv)
 {
     mlir::DialectRegistry registry;
     registry.insert<mlir::affine::AffineDialect>();
+    registry.insert<mlir::func::FuncDialect>();
 
     mlir::PassRegistration<mlir::tutorial::AffineFullUnrollPass>();
 
