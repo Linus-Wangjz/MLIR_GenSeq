@@ -1,4 +1,3 @@
-#include "stdio.h"
 #define SIZE 512
 #define MAT_WIDTH 50
 
