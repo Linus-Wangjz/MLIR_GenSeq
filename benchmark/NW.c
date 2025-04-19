@@ -1,6 +1,8 @@
 #define SIZE 512
 #define MAT_WIDTH 50
 
+#include<stdio.h>
+
 void Needleman_Wunsch(int A[SIZE][MAT_WIDTH], int B[SIZE][MAT_WIDTH], int C[SIZE][MAT_WIDTH+1][MAT_WIDTH+1]) {
     // initiation
     for (int i = 0; i < SIZE; i++) {
@@ -57,6 +59,8 @@ int main() {
     }
 
     Needleman_Wunsch(A, B, C);
+
+    printf("Success!\n");
 
     return 0;
 }
