@@ -18,6 +18,9 @@ include(AddLLVM)
 include(AddMLIR)
 include(HandleLLVMOptions)
 
+message(STATUS "MLIR includes: ${MLIR_INCLUDE_DIRS}")
+message(STATUS "LLVM includes: ${LLVM_INCLUDE_DIRS}")
+
 include_directories(${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
 
 add_executable(tutorial-opt tools/tutorial-opt.cpp)
