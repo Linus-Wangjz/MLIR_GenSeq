@@ -15,8 +15,10 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#include "mlir/Dialect/MemRef/Transforms/Passes.h"
 #include "mlir/ExecutionEngine/ExecutionEngine.h"
 #include "mlir/ExecutionEngine/OptUtils.h"
+#include "mlir/Dialect/Arith/IR/Arith.h"
 #include "mlir/IR/MLIRContext.h"
 #include "mlir/InitAllDialects.h"
 #include "mlir/InitAllPasses.h"
@@ -32,6 +34,7 @@
 #include "llvm/Support/SourceMgr.h"
 #include "llvm/Support/TargetSelect.h"
 #include "llvm/Support/ToolOutputFile.h"
+#include "llvm/Support/raw_ostream.h"
 
 #include "Hello/HelloDialect.h"
 #include "Hello/HelloPasses.h"
@@ -112,8 +115,9 @@ int loadAndProcessMLIR(mlir::MLIRContext &context,
   if (mlir::failed(mlir::applyPassManagerCLOptions(passManager)))
     return 4;
 
-  passManager.addPass(hello::createLowerToAffinePass());
-  passManager.addPass(hello::createLowerToLLVMPass());
+  // passManager.addPass(hello::createLowerToAffinePass());
+  // passManager.addPass(hello::createLowerToLLVMPass());
+  passManager.addPass(gen_seq::createVectorizationPass());
 
   if (mlir::failed(passManager.run(*module))) {
     return 4;
@@ -161,13 +165,16 @@ int main(int argc, char **argv) {
   mlir::MLIRContext context;
   context.getOrLoadDialect<hello::HelloDialect>();
   context.getOrLoadDialect<mlir::func::FuncDialect>();
+  context.getOrLoadDialect<mlir::affine::AffineDialect>();
+  context.getOrLoadDialect<mlir::arith::ArithDialect>();
 
   mlir::OwningOpRef<mlir::ModuleOp> module;
   if (int error = loadAndProcessMLIR(context, module)) {
     return error;
   }
 
-  dumpLLVMIR(*module);
+  module->print(llvm::outs());
+  // dumpLLVMIR(*module);
   //  runJit(*module);
 
   return 0;

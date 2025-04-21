@@ -27,4 +27,8 @@ std::unique_ptr<mlir::Pass> createLowerToAffinePass();
 std::unique_ptr<mlir::Pass> createLowerToLLVMPass();
 } // namespace hello
 
+namespace gen_seq {
+    std::unique_ptr<mlir::Pass> createVectorizationPass();
+}
+
 #endif // MLIR_HELLO_PASSES_H

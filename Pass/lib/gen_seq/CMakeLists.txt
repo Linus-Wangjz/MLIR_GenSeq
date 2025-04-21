@@ -3,6 +3,7 @@ add_mlir_dialect_library(MLIRGenSeq
 		HelloOps.cpp
 		LowerToAffine.cpp
 		LowerToLLVM.cpp
+		Vectorization.cpp
 
         ADDITIONAL_HEADER_DIRS
         ${PROJECT_SOURCE_DIR}/include/Hello
