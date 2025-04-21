@@ -38,7 +38,9 @@ target_link_libraries(
 
   MLIRFuncDialect
   MLIRAffineDialect
-  
+  MLIRAffineUtils
+
+
   MLIRIR
   MLIRParser
 

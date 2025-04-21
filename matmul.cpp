@@ -1,8 +1,8 @@
 #include<cstdint>
 
-#define N 200
-#define M 300
-#define K 400
+#define N 2
+#define M 3
+#define K 4
 
 void matmul(int32_t A[N][K], int32_t B[K][M], int32_t C[N][M]) {
   int32_t i, j, k;
