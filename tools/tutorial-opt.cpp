@@ -1,4 +1,4 @@
-#include "../include/AffineFullUnroll.h"
+#include "../include/Vectorization.h"
 #include "mlir/InitAllDialects.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Pass/PassRegistry.h"
@@ -10,9 +10,13 @@ int main(int argc, char **argv)
     // mlir::registerAllDialects(registry);
     registry.insert<mlir::affine::AffineDialect>();
     registry.insert<mlir::func::FuncDialect>();
+    registry.insert<mlir::LLVM::LLVMDialect>();
+    registry.insert<mlir::arith::ArithDialect>();
+    registry.insert<mlir::memref::MemRefDialect>();
 
-    mlir::PassRegistration<mlir::tutorial::AffineFullUnrollPass>();
-    mlir::PassRegistration<mlir::tutorial::AffineFullUnrollPassAsPatternRewrite>();
+    // mlir::PassRegistration<mlir::tutorial::AffineFullUnrollPass>();
+    mlir::PassRegistration<mlir::tutorial::AffineLoadVectorize>();
+
 
     return mlir::asMainReturnCode(
         mlir::MlirOptMain(argc, argv, "Tutorial Pass Driver", registry)

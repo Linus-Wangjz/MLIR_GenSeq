@@ -29,16 +29,24 @@ add_library(AffineFullUnroll STATIC
   lib/Transforms/AffineFullUnroll.cpp
 )
 
+add_library(Vectorization STATIC
+  lib/Transforms/Vectorization.cpp
+)
+
 target_link_libraries(
   tutorial-opt
 
   PRIVATE
 
-  AffineFullUnroll
+  # AffineFullUnroll
+  Vectorization
 
   MLIRFuncDialect
   MLIRAffineDialect
-  MLIRAffineUtils
+  MLIRVectorDialect
+  MLIRLLVMDialect
+  MLIRArithDialect
+  # MLIRAffineUtils
 
 
   MLIRIR
