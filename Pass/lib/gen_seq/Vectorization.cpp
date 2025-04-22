@@ -22,13 +22,30 @@
 
 void vectorize_ops(std::unordered_map<mlir::Operation *, mlir::OpResult> &map, std::vector<mlir::Operation *> &garbage, mlir::Operation *op, mlir::OpBuilder &builder) {
     if (auto loadOp = mlir::dyn_cast<mlir::affine::AffineLoadOp>(op)) {
+        // Get the AffineMap and its operands
+        mlir::AffineMap map = loadOp.getAffineMap();
+        auto mapOperands = loadOp.getMapOperands(); // These are [%arg4, %arg5, %arg3] or similar
+
+        std::vector<mlir::Value> effectiveIndices;
+        effectiveIndices.reserve(map.getNumResults());
+
+        for (unsigned i = 0, e = map.getNumResults(); i < e; ++i) {
+            // Create an affine.apply op to compute the i-th result of the map
+            // makeComposedAffineApply simplifies the expression if possible (e.g.,
+            // if map result is just 'd0', it returns the corresponding operand directly)
+            mlir::Value effectiveIndex = mlir::affine::makeComposedAffineApply(
+                builder, loadOp.getLoc(), map.getSubMap({i}), mapOperands);
+            effectiveIndices.push_back(effectiveIndex);
+        }
+
         auto memRefType = loadOp.getMemref();
         auto vectorType = mlir::VectorType::get({8}, builder.getIntegerType(32));
-        auto indices = loadOp.getIndices();
-        const auto loadOp_vec = builder.create<mlir::vector::LoadOp>(loadOp->getLoc(), vectorType, memRefType, indices);
+        // auto indices = loadOp.getIndices();
+        const auto loadOp_vec = builder.create<mlir::vector::LoadOp>(loadOp->getLoc(), vectorType, memRefType, effectiveIndices);
         map[loadOp.getOperation()] = loadOp_vec->getResult(0);
     }
 }
+
 
 struct GenSeqPass : public mlir::PassWrapper<GenSeqPass, mlir::OperationPass<mlir::ModuleOp>> {
     void runOnOperation() override {
