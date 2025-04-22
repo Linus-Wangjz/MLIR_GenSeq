@@ -15,6 +15,8 @@
 // specific language governing permissions and limitations
 // under the License.
 
+#include "mlir/Dialect/LLVMIR/LLVMDialect.h"
+#include "mlir/Dialect/MemRef/IR/MemRef.h"
 #include "mlir/Dialect/MemRef/Transforms/Passes.h"
 #include "mlir/Dialect/Vector/IR/VectorOps.h"
 #include "mlir/ExecutionEngine/ExecutionEngine.h"
@@ -169,6 +171,8 @@ int main(int argc, char **argv) {
   context.getOrLoadDialect<mlir::affine::AffineDialect>();
   context.getOrLoadDialect<mlir::arith::ArithDialect>();
   context.getOrLoadDialect<mlir::vector::VectorDialect>();
+  context.getOrLoadDialect<mlir::LLVM::LLVMDialect>();
+  context.getOrLoadDialect<mlir::memref::MemRefDialect>();
 
   mlir::OwningOpRef<mlir::ModuleOp> module;
   if (int error = loadAndProcessMLIR(context, module)) {

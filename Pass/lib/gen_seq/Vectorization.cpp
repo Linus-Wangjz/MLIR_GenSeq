@@ -6,6 +6,7 @@
 #include "mlir/IR/Builders.h"
 #include "mlir/IR/BuiltinAttributes.h"
 #include "mlir/IR/BuiltinOps.h"
+#include "mlir/IR/BuiltinTypes.h"
 #include "mlir/IR/Operation.h"
 #include "mlir/IR/PatternMatch.h"
 #include "mlir/IR/Value.h"
@@ -19,39 +20,70 @@
 #include <unordered_map>
 #include <vector>
 
+void vectorize_ops(std::unordered_map<mlir::Operation *, mlir::OpResult> &map, std::vector<mlir::Operation *> &garbage, mlir::Operation *op, mlir::OpBuilder &builder) {
+    if (auto loadOp = mlir::dyn_cast<mlir::affine::AffineLoadOp>(op)) {
+        auto memRefType = loadOp.getMemref();
+        auto vectorType = mlir::VectorType::get({8}, builder.getIntegerType(32));
+        auto indices = loadOp.getIndices();
+        const auto loadOp_vec = builder.create<mlir::vector::LoadOp>(loadOp->getLoc(), vectorType, memRefType, indices);
+        map[loadOp.getOperation()] = loadOp_vec->getResult(0);
+    }
+}
+
 struct GenSeqPass : public mlir::PassWrapper<GenSeqPass, mlir::OperationPass<mlir::ModuleOp>> {
     void runOnOperation() override {
         llvm::outs() << "run gen seq pass\n";
         // map to store hoist ops
         getOperation().walk([](mlir::affine::AffineForOp forOp1) {
-            bool is_target_loop = false;
             std::unordered_map<mlir::Operation *, mlir::OpResult> map;
             std::vector<mlir::Operation *> garbage;
             forOp1.getBody()->walk([&](mlir::affine::AffineForOp forOp2) {
                 forOp2.getBody()->walk([&](mlir::affine::AffineForOp forOp3) {
-                    is_target_loop = true;
                     mlir::OpBuilder builder(forOp1->getContext());
-                    builder.setInsertionPointToStart(forOp1.getBody());
-                    forOp1.setStep(16);
-                    forOp3.getBody()->walk([&](mlir::arith::ConstantIntOp constOp) {
-                        auto constOp_val = constOp.getValue();
-                        auto int_val = mlir::dyn_cast<mlir::IntegerAttr>(constOp_val);
-                        const auto &constOp_hoist = builder.create<mlir::arith::ConstantIntOp>(forOp1->getLoc(), int_val.getInt(), 32);
-                        auto vectorType = mlir::VectorType::get({16}, builder.getIntegerType(32));
-                        const auto &vec_op = builder.create<mlir::vector::BroadcastOp>(forOp1->getLoc(), vectorType, constOp_hoist->getResult(0));
-                        map[constOp.getOperation()] = vec_op->getResult(0);
-                        garbage.push_back(constOp.getOperation());
+                    builder.setInsertionPointToStart(forOp1->getBlock());
+                    forOp1.setStep(8);
+                    // walk through all ops to find constant attr
+                    forOp3.getBody()->walk([&](mlir::Operation *op) {
+                        for (const auto &operand: op->getOperands()) {
+                            if (auto oper = operand.getDefiningOp()) {
+                                if (auto constOp = mlir::dyn_cast<mlir::arith::ConstantIntOp>(oper)) {
+                                    if (map.find(constOp.getOperation()) == map.end()) {
+                                        auto constOp_val = constOp.getValue();
+                                        auto int_val = mlir::dyn_cast<mlir::IntegerAttr>(constOp_val);
+                                        const auto &constOp_hoist = builder.create<mlir::arith::ConstantIntOp>(forOp1->getLoc(), int_val.getInt(), 32);
+                                        auto vectorType = mlir::VectorType::get({8}, builder.getIntegerType(32));
+                                        const auto &vec_op = builder.create<mlir::vector::BroadcastOp>(forOp1->getLoc(), vectorType, constOp_hoist->getResult(0));
+                                        map[constOp.getOperation()] = vec_op->getResult(0);
+                                        // TODO: collect garbage
+                                        // garbage.push_back(constOp.getOperation());
+                                    }
+                                }
+                            }
+                        }
                     });
-                    forOp3.getBody()->walk([&](mlir::arith::AddIOp addiOp) {
-                        builder.setInsertionPointToStart(forOp3.getBody());
-                        // auto vectorType = mlir::VectorType::get({16}, builder.getIntegerType(32));
-                        auto op1 = addiOp.getOperand(0);
-                        auto op2 = addiOp.getOperand(1);
-                        auto op1_new = map[op1.getDefiningOp()];
-                        auto op2_new = map[op2.getDefiningOp()];
-                        builder.create<mlir::arith::AddIOp>(forOp3->getLoc(), op1_new, op2_new);
-                        garbage.push_back(addiOp.getOperation());
+                    builder.setInsertionPointToStart(forOp3.getBody());
+                    forOp3.getBody()->walk([&](mlir::Operation *op) {
+                        vectorize_ops(map, garbage, op, builder);
                     });
+                    // forOp3.getBody()->walk([&](mlir::arith::ConstantIntOp constOp) {
+                    //     auto constOp_val = constOp.getValue();
+                    //     auto int_val = mlir::dyn_cast<mlir::IntegerAttr>(constOp_val);
+                    //     const auto &constOp_hoist = builder.create<mlir::arith::ConstantIntOp>(forOp1->getLoc(), int_val.getInt(), 32);
+                    //     auto vectorType = mlir::VectorType::get({16}, builder.getIntegerType(32));
+                    //     const auto &vec_op = builder.create<mlir::vector::BroadcastOp>(forOp1->getLoc(), vectorType, constOp_hoist->getResult(0));
+                    //     map[constOp.getOperation()] = vec_op->getResult(0);
+                    //     garbage.push_back(constOp.getOperation());
+                    // });
+                    // forOp3.getBody()->walk([&](mlir::arith::AddIOp addiOp) {
+                    //     builder.setInsertionPointToStart(forOp3.getBody());
+                    //     // auto vectorType = mlir::VectorType::get({16}, builder.getIntegerType(32));
+                    //     auto op1 = addiOp.getOperand(0);
+                    //     auto op2 = addiOp.getOperand(1);
+                    //     auto op1_new = map[op1.getDefiningOp()];
+                    //     auto op2_new = map[op2.getDefiningOp()];
+                    //     builder.create<mlir::arith::AddIOp>(forOp3->getLoc(), op1_new, op2_new);
+                    //     garbage.push_back(addiOp.getOperation());
+                    // });
                 });
             });
             llvm::outs() << "Collecting Garbage\n";
