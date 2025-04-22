@@ -140,4 +140,4 @@ struct GenSeqPass : public mlir::PassWrapper<GenSeqPass, mlir::OperationPass<mli
 
 std::unique_ptr<mlir::Pass> gen_seq::createVectorizationPass() {
     return std::make_unique<GenSeqPass>();
-  }
+}
