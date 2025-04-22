@@ -3,6 +3,24 @@ Collecting Garbage
 Collecting Garbage
 Collecting Garbage
 Collecting Garbage
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
+vectorizing
 Collecting Garbage
 Collecting Garbage
 Collecting Garbage
@@ -34,27 +52,39 @@ module {
       affine.for %arg4 = 1 to 51 {
         affine.for %arg5 = 1 to 51 {
           %3 = vector.load %arg2[%arg4, %arg5, %arg3] : memref<?x51x512xi32>, vector<8xi32>
-          %4 = vector.load %arg2[%arg4, %arg5, %arg3] : memref<?x51x512xi32>, vector<8xi32>
+          %4 = arith.addi %3, %0 : vector<8xi32>
           %5 = vector.load %arg2[%arg4, %arg5, %arg3] : memref<?x51x512xi32>, vector<8xi32>
-          %6 = vector.load %arg0[%arg3, %arg4] : memref<?x50xi32>, vector<8xi32>
-          %7 = vector.load %arg1[%arg3, %arg4] : memref<?x50xi32>, vector<8xi32>
-          %8 = affine.load %arg2[%arg4 - 1, %arg5, %arg3] : memref<?x51x512xi32>
-          %9 = arith.addi %8, %c-5_i32_0 : i32
-          %10 = affine.load %arg2[%arg4, %arg5 - 1, %arg3] : memref<?x51x512xi32>
-          %11 = arith.addi %10, %c-5_i32_0 : i32
-          %12 = affine.load %arg2[%arg4 - 1, %arg5 - 1, %arg3] : memref<?x51x512xi32>
-          %13 = affine.load %arg0[%arg3, %arg4 - 1] : memref<?x50xi32>
-          %14 = affine.load %arg1[%arg3, %arg4 - 1] : memref<?x50xi32>
-          %15 = arith.cmpi eq, %13, %14 : i32
-          %16 = arith.extui %15 : i1 to i32
-          %17 = arith.muli %16, %c7_i32_2 : i32
-          %18 = arith.subi %12, %17 : i32
-          %19 = arith.addi %18, %c2_i32_1 : i32
-          %20 = arith.cmpi slt, %9, %11 : i32
-          %21 = arith.select %20, %11, %9 : i32
-          %22 = arith.cmpi slt, %21, %19 : i32
-          %23 = arith.select %22, %19, %21 : i32
-          affine.store %23, %arg2[%arg4, %arg5, %arg3] : memref<?x51x512xi32>
+          %6 = arith.addi %5, %0 : vector<8xi32>
+          %7 = vector.load %arg2[%arg4, %arg5, %arg3] : memref<?x51x512xi32>, vector<8xi32>
+          %8 = vector.load %arg0[%arg3, %arg4] : memref<?x50xi32>, vector<8xi32>
+          %9 = vector.load %arg1[%arg3, %arg4] : memref<?x50xi32>, vector<8xi32>
+          %10 = arith.cmpi eq, %8, %9 : vector<8xi32>
+          %11 = arith.extui %10 : vector<8xi1> to vector<8xi32>
+          %12 = arith.muli %11, %1 : vector<8xi32>
+          %13 = arith.subi %7, %12 : vector<8xi32>
+          %14 = arith.addi %13, %2 : vector<8xi32>
+          %15 = arith.cmpi slt, %4, %6 : vector<8xi32>
+          %16 = arith.select %15, %6, %4 : vector<8xi1>, vector<8xi32>
+          %17 = arith.cmpi slt, %16, %14 : vector<8xi32>
+          %18 = arith.select %17, %14, %16 : vector<8xi1>, vector<8xi32>
+          vector.store %18, %arg2[%arg4, %arg5, %arg3] : memref<?x51x512xi32>, vector<8xi32>
+          %19 = affine.load %arg2[%arg4 - 1, %arg5, %arg3] : memref<?x51x512xi32>
+          %20 = arith.addi %19, %c-5_i32_0 : i32
+          %21 = affine.load %arg2[%arg4, %arg5 - 1, %arg3] : memref<?x51x512xi32>
+          %22 = arith.addi %21, %c-5_i32_0 : i32
+          %23 = affine.load %arg2[%arg4 - 1, %arg5 - 1, %arg3] : memref<?x51x512xi32>
+          %24 = affine.load %arg0[%arg3, %arg4 - 1] : memref<?x50xi32>
+          %25 = affine.load %arg1[%arg3, %arg4 - 1] : memref<?x50xi32>
+          %26 = arith.cmpi eq, %24, %25 : i32
+          %27 = arith.extui %26 : i1 to i32
+          %28 = arith.muli %27, %c7_i32_2 : i32
+          %29 = arith.subi %23, %28 : i32
+          %30 = arith.addi %29, %c2_i32_1 : i32
+          %31 = arith.cmpi slt, %20, %22 : i32
+          %32 = arith.select %31, %22, %20 : i32
+          %33 = arith.cmpi slt, %32, %30 : i32
+          %34 = arith.select %33, %30, %32 : i32
+          affine.store %34, %arg2[%arg4, %arg5, %arg3] : memref<?x51x512xi32>
         }
       }
     }
