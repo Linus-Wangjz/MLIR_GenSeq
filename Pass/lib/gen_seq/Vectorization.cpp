@@ -24,7 +24,9 @@ void vectorize_ops(std::unordered_map<mlir::Operation *, mlir::OpResult> &map, s
     if (auto loadOp = mlir::dyn_cast<mlir::affine::AffineLoadOp>(op)) {
         // Get the AffineMap and its operands
         mlir::AffineMap map = loadOp.getAffineMap();
-        auto mapOperands = loadOp.getMapOperands(); // These are [%arg4, %arg5, %arg3] or similar
+        mlir::ValueRange mapOps = loadOp.getMapOperands();        // ValueRange
+        llvm::SmallVector<mlir::OpFoldResult, 4> ofrs;               // 临时缓冲
+        ofrs.append(mapOps.begin(), mapOps.end());       // Value → OpFoldResult
 
         std::vector<mlir::Value> effectiveIndices;
         effectiveIndices.reserve(map.getNumResults());
@@ -34,7 +36,7 @@ void vectorize_ops(std::unordered_map<mlir::Operation *, mlir::OpResult> &map, s
             // makeComposedAffineApply simplifies the expression if possible (e.g.,
             // if map result is just 'd0', it returns the corresponding operand directly)
             mlir::Value effectiveIndex = mlir::affine::makeComposedAffineApply(
-                builder, loadOp.getLoc(), map.getSubMap({i}), mapOperands);
+                builder, loadOp.getLoc(), map.getSubMap({i}), ofrs);
             effectiveIndices.push_back(effectiveIndex);
         }
 
@@ -42,7 +44,7 @@ void vectorize_ops(std::unordered_map<mlir::Operation *, mlir::OpResult> &map, s
         auto vectorType = mlir::VectorType::get({8}, builder.getIntegerType(32));
         // auto indices = loadOp.getIndices();
         const auto loadOp_vec = builder.create<mlir::vector::LoadOp>(loadOp->getLoc(), vectorType, memRefType, effectiveIndices);
-        map[loadOp.getOperation()] = loadOp_vec->getResult(0);
+        // map[loadOp.getOperation()] = loadOp_vec->getResult(0);
     }
 }
 
