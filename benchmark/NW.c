@@ -4,7 +4,7 @@
 #include<stdio.h>
 #include<stdlib.h>
 
-void Needleman_Wunsch(int A[SIZE][MAT_WIDTH], int B[SIZE][MAT_WIDTH], int C[MAT_WIDTH+1][MAT_WIDTH+1][SIZE]) {
+void Needleman_Wunsch(int A[MAT_WIDTH][SIZE], int B[MAT_WIDTH][SIZE], int C[MAT_WIDTH+1][MAT_WIDTH+1][SIZE]) {
     // initiation
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < MAT_WIDTH + 1; j++) {
@@ -27,7 +27,7 @@ void Needleman_Wunsch(int A[SIZE][MAT_WIDTH], int B[SIZE][MAT_WIDTH], int C[MAT_
                 temp1 = C[j - 1][k][i] - 5;
                 temp2 = C[j][k - 1][i] - 5;
                 temp3 = C[j - 1][k - 1][i];
-                temp3 = temp3 - (A[i][j - 1] == B[i][j - 1]) * scale + offset; 
+                temp3 = temp3 - (A[j - 1][i] == B[j - 1][i]) * scale + offset; 
                 // if (A[i][j - 1] == B[i][j - 1]) {
                 //     temp3 += 2;
                 // } else {
@@ -49,19 +49,19 @@ void Needleman_Wunsch(int A[SIZE][MAT_WIDTH], int B[SIZE][MAT_WIDTH], int C[MAT_
 }
 
 int main() {
-    int A[SIZE][MAT_WIDTH];
-    int B[SIZE][MAT_WIDTH];
+    int A[MAT_WIDTH][SIZE];
+    int B[MAT_WIDTH][SIZE];
     int C[MAT_WIDTH+1][MAT_WIDTH+1][SIZE];
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < MAT_WIDTH; j++) {
-            A[i][j] = (i * j + 3 * i + j) % 4;
+            A[j][i] = (i * j + 3 * i + j) % 4;
         }
     }
 
     for (int i = 0; i < SIZE; i++) {
         for (int j = 0; j < MAT_WIDTH; j++) {
-            B[i][j] = ((i - 1) * j * 3 + 1 * i + 2 * j) % 4;
+            B[j][i] = ((i - 1) * j * 3 + 1 * i + 2 * j) % 4;
         }
     }
 

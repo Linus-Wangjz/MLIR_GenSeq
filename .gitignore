@@ -2,3 +2,6 @@ build/
 
 *.out
 *.exe
+
+*.mlir
+*.ll
