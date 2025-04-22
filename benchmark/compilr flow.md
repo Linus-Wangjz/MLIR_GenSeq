@@ -5,12 +5,22 @@
 3. The step (2) is for the following step using "{$POLYGEIST_BUILD_DIR}/bin/cgeist ./benchmark/NW.c -S -raise-scf-to-affine > ./benchmark/NW.mlir" to convert the C code into MLIR dialect
 (~/Documents/Polygeist/build/bin/cgeist ./benchmark/NW.c -S -raise-scf-to-affine > ./benchmark/NW.mlir)
 
-4. Run the pass for the generated NW.mlir
+4. Compile the pass 
+mkdir build && cd build
+cmake -G Ninja .. -DLLVM_DIR=~/Documents/llvm-project/build/lib/cmake/llvm \
+  -DMLIR_DIR=~/Documents/llvm-project/build/lib/cmake/mlir \
+  -DCMAKE_EXPORT_COMPILE_COMMANDS=1
 
-5. Lower from other dialect to LLVM dialect with "mlir-opt". Run "{$MLIR_BUILD_DIR}/bin/mlir-opt ./benchmark/NW.mlir --lower-affine --convert-polygeist-to-llvm > ./benchmark/NW_llvm.mlir" to convert to llvm dialect. Notice the "--lower-affine" option is needed as "--convert-polygeist-to-llvm" option assumes that affine has already be lowered.
+cmake --build . --target vec-opt
 
+5. Run the pass for the generated NW.mlir
+./bin/vec-opt ../../benchmark/NW.mlir > ../../benchmark/NW_pass.mlir
+
+5. Lower from other dialect to LLVM dialect with "mlir-opt". Run:
 ~/Documents/Polygeist/llvm-project/build/bin/mlir-opt --lower-affine --convert-vector-to-llvm="enable-x86vector" --convert-scf-to-cf --convert-to-llvm --reconcile-unrealized-casts ./benchmark/NW_pass.mlir > ./benchmark/NW_pass_llvm.mlir
 
 6. Use the mlir-translatr with option "--mlir-to-llvmir" to translate LLVM dialect to LLVM IR. Run "{$LLVM_BUILD_DIR}/bin/mlir-translate --mlir-to-llvmir ./benchmark/NW_llvm.mlir -o NW.ll"
 
-7. Use clang to compile the LLVM IR. Notice Step 5 uses opaque pointer as default, so your LLVM version should be newer than 15
+7. Use clang to compile the LLVM IR. Notice the previous uses opaque pointer as default, so your LLVM version should be newer than 15
+
+8. (Bonus) use clang -S -mavx2 ./benchmark/NW_pass.ll -o ./benchmark/NW_pass.s
