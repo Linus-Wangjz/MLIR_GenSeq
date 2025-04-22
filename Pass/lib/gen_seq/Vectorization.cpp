@@ -96,7 +96,7 @@ void vectorize_ops(std::unordered_map<mlir::Operation *, mlir::OpResult> &map, s
 
 struct GenSeqPass : public mlir::PassWrapper<GenSeqPass, mlir::OperationPass<mlir::ModuleOp>> {
     void runOnOperation() override {
-        llvm::outs() << "run gen seq pass\n";
+        // llvm::outs() << "run gen seq pass\n";
         // map to store hoist ops
         getOperation().walk([](mlir::affine::AffineForOp forOp1) {
             std::unordered_map<mlir::Operation *, mlir::OpResult> map;
@@ -127,11 +127,11 @@ struct GenSeqPass : public mlir::PassWrapper<GenSeqPass, mlir::OperationPass<mli
                     });
                     builder.setInsertionPointToStart(forOp3.getBody());
                     forOp3.getBody()->walk([&](mlir::Operation *op) {
-                        llvm::outs() << "vectorizing\n";
+                        // llvm::outs() << "vectorizing\n";
                         vectorize_ops(map, garbage, op, builder);
                     });
                     collect_garbage(garbage);
-                    llvm::outs() << "Garbage left: " << garbage.size() << "\n";
+                    // llvm::outs() << "Garbage left: " << garbage.size() << "\n";
                 });
             });
         });
