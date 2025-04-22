@@ -49,8 +49,15 @@ void AffineLoadVectorize::runOnOperation() {
     // Insert new ops *at* the original load position.
     rewriter.setInsertionPoint(ld);
 
+    
     AffineMap map = ld.getAffineMap();
-    ValueRange mapOperands = ld.getMapOperands();
+    // SmallVector<Value, 4> mapOperands(ld.getMapOperands());
+    ValueRange mapOps = ld.getMapOperands();        // ValueRange
+    SmallVector<OpFoldResult, 4> ofrs;               // 临时缓冲
+    ofrs.append(mapOps.begin(), mapOps.end());       // Value → OpFoldResult
+
+    std::vector<Value> effectiveIndices;
+    effectiveIndices.reserve(map.getNumResults());
 
     // Materialize each effective index defined by the AffineMap
     for (unsigned i = 0, e = map.getNumResults(); i < e; ++i) {
@@ -58,13 +65,13 @@ void AffineLoadVectorize::runOnOperation() {
       // makeComposedAffineApply simplifies the expression if possible (e.g.,
       // if map result is just 'd0', it returns the corresponding operand directly)
       Value effectiveIndex = affine::makeComposedAffineApply(
-          rewriter, loc, map.getSubMap({i}), mapOperands);
+          rewriter, ld.getLoc(), map.getSubMap({i}), ofrs);
       effectiveIndices.push_back(effectiveIndex);
     }
 
     // 1. vector.load memref[%indices] : memref<..>, vector<8xT>
     auto vload = rewriter.create<vector::LoadOp>(
-        ld.getLoc(), vecTy, ld.getMemRef(), ld.getIndices());
+        ld.getLoc(), vecTy, ld.getMemRef(), effectiveIndices);
 
 
     // 3. Replace all uses of the *result value* of the original load.
