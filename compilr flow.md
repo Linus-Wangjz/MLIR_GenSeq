@@ -25,7 +25,7 @@ cmake --build . --target vec-opt
 ~/Documents/Polygeist/llvm-project/build/bin/mlir-translate --mlir-to-llvmir ./benchmark/NW_pass_llvm.mlir -o ./benchmark/NW_pass.ll
 
 7. Use clang to compile the LLVM IR. Notice the previous uses opaque pointer as default, so your LLVM version should be newer than 15
-~/Documents/Polygeist/llvm-project/build/bin/clang -O3 -mavx2 ./benchmark/NW_pass.ll
+~/Documents/Polygeist/llvm-project/build/bin/clang -O3 -mavx2 ./benchmark/NW_pass.ll -o ./benchmark/NW_pass.exe
 
 8. (Bonus) use 
 ~/Documents/Polygeist/llvm-project/build/bin/clang -S -mavx2 ./benchmark/NW_pass.ll -o ./benchmark/NW_pass.s
