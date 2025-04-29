@@ -40,59 +40,44 @@ module {
     return
   }
   func.func @main() -> i32 attributes {llvm.linkage = #llvm.linkage<external>} {
-    %c7_i32 = arith.constant 7 : i32
-    %c-5_i32 = arith.constant -5 : i32
-    %c-1 = arith.constant -1 : index
     %c-1_i32 = arith.constant -1 : i32
     %c2_i32 = arith.constant 2 : i32
     %c4_i32 = arith.constant 4 : i32
     %c3_i32 = arith.constant 3 : i32
     %c0_i32 = arith.constant 0 : i32
     %alloca = memref.alloca() : memref<51x51x512xi32>
+    %alloca_0 = memref.alloca() : memref<50x512xi32>
+    %alloca_1 = memref.alloca() : memref<50x512xi32>
     affine.for %arg0 = 0 to 512 {
-      affine.for %arg1 = 0 to 51 {
-        %3 = arith.index_cast %arg1 : index to i32
-        %4 = arith.subi %c0_i32, %3 : i32
-        affine.store %4, %alloca[%arg1, 0, %arg0] : memref<51x51x512xi32>
-        affine.store %4, %alloca[0, %arg1, %arg0] : memref<51x51x512xi32>
+      %3 = arith.index_cast %arg0 : index to i32
+      %4 = arith.muli %3, %c3_i32 : i32
+      affine.for %arg1 = 0 to 50 {
+        %5 = arith.index_cast %arg1 : index to i32
+        %6 = arith.muli %3, %5 : i32
+        %7 = arith.addi %6, %4 : i32
+        %8 = arith.addi %7, %5 : i32
+        %9 = arith.remsi %8, %c4_i32 : i32
+        affine.store %9, %alloca_1[%arg1, %arg0] : memref<50x512xi32>
       }
     }
     affine.for %arg0 = 0 to 512 {
       %3 = arith.index_cast %arg0 : index to i32
-      %4 = arith.muli %3, %c3_i32 : i32
-      %5 = arith.addi %3, %c-1_i32 : i32
-      affine.for %arg1 = 1 to 51 {
-        %6 = arith.addi %arg1, %c-1 : index
-        %7 = arith.index_cast %6 : index to i32
-        %8 = arith.muli %3, %7 : i32
-        %9 = arith.addi %8, %4 : i32
-        %10 = arith.addi %9, %7 : i32
+      %4 = arith.addi %3, %c-1_i32 : i32
+      affine.for %arg1 = 0 to 50 {
+        %5 = arith.index_cast %arg1 : index to i32
+        %6 = arith.muli %4, %5 : i32
+        %7 = arith.muli %6, %c3_i32 : i32
+        %8 = arith.addi %7, %3 : i32
+        %9 = arith.muli %5, %c2_i32 : i32
+        %10 = arith.addi %8, %9 : i32
         %11 = arith.remsi %10, %c4_i32 : i32
-        %12 = arith.muli %5, %7 : i32
-        %13 = arith.muli %12, %c3_i32 : i32
-        %14 = arith.addi %13, %3 : i32
-        %15 = arith.muli %7, %c2_i32 : i32
-        %16 = arith.addi %14, %15 : i32
-        %17 = arith.remsi %16, %c4_i32 : i32
-        %18 = arith.cmpi eq, %11, %17 : i32
-        %19 = arith.extui %18 : i1 to i32
-        %20 = arith.muli %19, %c7_i32 : i32
-        affine.for %arg2 = 1 to 51 {
-          %21 = affine.load %alloca[%arg1 - 1, %arg2, %arg0] : memref<51x51x512xi32>
-          %22 = arith.addi %21, %c-5_i32 : i32
-          %23 = affine.load %alloca[%arg1, %arg2 - 1, %arg0] : memref<51x51x512xi32>
-          %24 = arith.addi %23, %c-5_i32 : i32
-          %25 = affine.load %alloca[%arg1 - 1, %arg2 - 1, %arg0] : memref<51x51x512xi32>
-          %26 = arith.subi %25, %20 : i32
-          %27 = arith.addi %26, %c2_i32 : i32
-          %28 = arith.cmpi slt, %22, %24 : i32
-          %29 = arith.select %28, %24, %22 : i32
-          %30 = arith.cmpi slt, %29, %27 : i32
-          %31 = arith.select %30, %27, %29 : i32
-          affine.store %31, %alloca[%arg1, %arg2, %arg0] : memref<51x51x512xi32>
-        }
+        affine.store %11, %alloca_0[%arg1, %arg0] : memref<50x512xi32>
       }
     }
+    %cast = memref.cast %alloca_1 : memref<50x512xi32> to memref<?x512xi32>
+    %cast_2 = memref.cast %alloca_0 : memref<50x512xi32> to memref<?x512xi32>
+    %cast_3 = memref.cast %alloca : memref<51x51x512xi32> to memref<?x51x512xi32>
+    call @Needleman_Wunsch(%cast, %cast_2, %cast_3) : (memref<?x512xi32>, memref<?x512xi32>, memref<?x51x512xi32>) -> ()
     %0 = llvm.mlir.addressof @str0 : !llvm.ptr
     %1 = llvm.getelementptr %0[0, 0] : (!llvm.ptr) -> !llvm.ptr, !llvm.array<10 x i8>
     %2 = llvm.call @printf(%1) vararg(!llvm.func<i32 (ptr, ...)>) : (!llvm.ptr) -> i32

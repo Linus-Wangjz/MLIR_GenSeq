@@ -2,7 +2,7 @@
 
 2. "stddef.h" header file is in a specific location, not under "/usr/include". Use "export C(PLUS)_INCLUDE_PATH=/usr/lib/llvm-14/lib/clang/14.0.6/include" (may vary depend on the computer you use) to specify an environment variable so that compilers could find the "stddef.h" file
 
-3. The step (2) is for the following step using "{$POLYGEIST_BUILD_DIR}/bin/cgeist ./benchmark/NW.c -S -raise-scf-to-affine > ./benchmark/NW.mlir" to convert the C code into MLIR dialect
+3. The step (2) is for the following step using "{$POLYGEIST_BUILD_DIR}/bin/cgeist ./benchmark/NW.c -S -O0 -raise-scf-to-affine > ./benchmark/NW.mlir" to convert the C code into MLIR dialect
 (~/Documents/Polygeist/build/bin/cgeist ./benchmark/NW.c -S -O0 -raise-scf-to-affine > ./benchmark/NW.mlir)
 
 *** Delete Attribute

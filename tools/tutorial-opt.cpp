@@ -1,4 +1,4 @@
-#include "../include/AffineFullUnroll.h"
+#include "../include/GenSeqVec.h"
 #include "mlir/InitAllDialects.h"
 #include "mlir/Pass/PassManager.h"
 #include "mlir/Pass/PassRegistry.h"
@@ -7,11 +7,21 @@
 int main(int argc, char **argv)
 {
     mlir::DialectRegistry registry;
+    // mlir::registerAllDialects(registry);
     registry.insert<mlir::affine::AffineDialect>();
+    registry.insert<mlir::arith::ArithDialect>();
+    registry.insert<mlir::func::FuncDialect>();
+    registry.insert<mlir::LLVM::LLVMDialect>();
+    registry.insert<mlir::memref::MemRefDialect>();
+    registry.insert<mlir::scf::SCFDialect>();
+    registry.insert<mlir::vector::VectorDialect>();
 
-    mlir::PassRegistration<mlir::tutorial::AffineFullUnrollPass>();
+    // mlir::PassRegistration<mlir::tutorial::AffineFullUnrollPass>();
+    // mlir::PassRegistration<mlir::tutorial::AffineLoadVectorize>();
+    mlir::PassRegistration<mlir::GenSeqVectorize>();
+
 
     return mlir::asMainReturnCode(
-        mlir::MlirOptMain(argc, argv, "Tutorial Pass Driver", registry)
+        mlir::MlirOptMain(argc, argv, "Genome Sequencing Vectorization Driver", registry)
     );
 }
