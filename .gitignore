@@ -1,7 +1,10 @@
 build/
 
+*.ll
 *.out
+*.exe
 
 .DS_Store
+.vscode
 
 Pass/.cache/

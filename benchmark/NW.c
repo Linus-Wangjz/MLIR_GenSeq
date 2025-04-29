@@ -47,6 +47,12 @@ void Needleman_Wunsch(int **A, int **B, int ***C, int num_pair) {
     }
 }
 
+/*
+Command line argument ./NW.exe ./int_small/seqx.txt ./int_small/seqy.txt 64
+small 64
+medium 512
+large 2048
+*/
 int main(int argc, char* argv[]) {
     // int A[LENGTH][num_pair];
     // int B[LENGTH][num_pair];
@@ -54,25 +60,31 @@ int main(int argc, char* argv[]) {
     int num_pair;
 
     FILE *fp_x, *fp_y;
-    if (strcpy(argv[1],"small") == 0)
-    {
-        fp_x = fopen("./int_small/seqx.txt","r");
-        fp_y = fopen("./int_small/seqy.txt","r");
-        num_pair = 64;
 
-    }
-    else if (strcpy(argv[1],"medium") == 0)
+    if (argc != 4)
     {
-        fp_x = fopen("./int_medium/seqx.txt","r");
-        fp_y = fopen("./int_medium/seqy.txt","r");
-        num_pair = 512;
+        printf("Usage: ./NW.exe PATH_TO_SEQX PATH_TO_SEQY NUM_OF_PAIRS\n");
+        exit(EXIT_FAILURE);
     }
-    else if (strcpy(argv[1],"large") == 0)
+
+    if ((fp_x = fopen(argv[1],"r")) == NULL)
     {
-        fp_x = fopen("./int_large/seqx.txt","r");
-        fp_y = fopen("./int_large/seqy.txt","r");
-        num_pair = 2048;
+        printf("Cannot open %s\n", argv[1]);
+        exit(EXIT_FAILURE);
     }
+    
+    if ((fp_y = fopen(argv[2],"r")) == NULL)
+    {
+        printf("Cannot open %s\n", argv[2]);
+        exit(EXIT_FAILURE);
+    }
+
+    if ((num_pair = atoi(argv[3])) == 0)
+    {
+        printf("Invalid number of pairs: %s\n", argv[3]);
+        exit(EXIT_FAILURE);
+    }
+
 
     int **A = (int **) malloc(LENGTH * sizeof(int *));
     int **B = (int **) malloc(LENGTH * sizeof(int *));
@@ -83,26 +95,29 @@ int main(int argc, char* argv[]) {
         B[i] = (int *) malloc(num_pair * sizeof(int));
     }
 
-    int ***C = (int ***) malloc(LENGTH * sizeof(int **));
-    for (int i = 0; i < LENGTH; i++) 
+    int ***C = (int ***) malloc((LENGTH + 1) * sizeof(int **));
+    for (int i = 0; i < LENGTH + 1; i++) 
     {
-        C[i] = (int **) malloc(LENGTH * sizeof(int *));
-        for (int j = 0; j < LENGTH; j++)
+        C[i] = (int **) malloc((LENGTH + 1) * sizeof(int *));
+        for (int j = 0; j < LENGTH + 1; j++)
         {
             C[i][j] = (int *) malloc(num_pair * sizeof(int));
         }
     }
 
+    char Achar, Bchar;
     for (int i = 0; i < num_pair; i++) {
         for (int j = 0; j < LENGTH; j++) {
-            fscanf(fp_x, "%d", &A[j][i]);
+            fscanf(fp_x, "%c", &Achar);
+            A[j][i] = atoi(&Achar);
             // A[j][i] = (i * j + 3 * i + j) % 4;
         }
     }
 
     for (int i = 0; i < num_pair; i++) {
         for (int j = 0; j < LENGTH; j++) {
-            fscanf(fp_y, "%d", &B[j][i]);
+            fscanf(fp_y, "%c", &Bchar);
+            B[j][i] = atoi(&Bchar);
             // B[j][i] = ((i - 1) * j * 3 + 1 * i + 2 * j) % 4;
         }
     }
@@ -118,9 +133,18 @@ int main(int argc, char* argv[]) {
         free(A[i]);
         free(B[i]);
     }
-
     free(A);
     free(B);
+
+    for (int i = 0; i < LENGTH; i++)
+    {
+        for (int j = 0; j < LENGTH; j++)
+        {
+            free(C[i][j]);
+        }
+        free(C[i]);
+    }
+    free(C);
 
     fclose(fp_x);
     fclose(fp_y);
