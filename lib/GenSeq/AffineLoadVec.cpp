@@ -1,6 +1,6 @@
 #include <vector>
 
-#include "../../include/AffineLoadVec.h"
+#include "../../include/GenSeq/AffineLoadVec.h"
 
 #include "mlir/Dialect/Affine/IR/AffineOps.h"
 #include "mlir/Dialect/Func/IR/FuncOps.h"           // func::FuncOp

@@ -20,7 +20,7 @@
 #include <unordered_map>
 #include <vector>
 
-#include "../../include/GenSeqVec.h"
+#include "../../include/GenSeq/NWVectorize.h"
 
 void collect_garbage(std::vector<mlir::Operation *> &garbage) {
     while (!garbage.empty()) {
@@ -113,7 +113,7 @@ void vectorize_ops(std::unordered_map<mlir::Operation *, mlir::OpResult> &map, s
     } 
 } 
 
-void mlir::GenSeqVectorize::runOnOperation() {
+void mlir::NWVectorize::runOnOperation() {
     // llvm::outs() << "run gen seq pass\n";
     // map to store hoist ops
 

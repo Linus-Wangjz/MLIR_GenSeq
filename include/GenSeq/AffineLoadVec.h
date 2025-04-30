@@ -6,11 +6,10 @@
 #include "mlir/Pass/Pass.h"
 
 namespace mlir {
-namespace tutorial {
 
 class AffineLoadVectorize :
     public PassWrapper<AffineLoadVectorize,
-                       OperationPass<mlir::func::FuncOp>> {
+                       OperationPass<func::FuncOp>> {
 
 private:
     void runOnOperation() override;
@@ -22,7 +21,6 @@ private:
     }
 };
 
-} // namespace tutorial
-} // namespace mlir
+} 
 
 #endif // LIB_TRANSFORM_AFFINE_AFFINEFULLUNROLL_H_

@@ -23,10 +23,10 @@ message(STATUS "LLVM includes: ${LLVM_INCLUDE_DIRS}")
 
 include_directories(${LLVM_INCLUDE_DIRS} ${MLIR_INCLUDE_DIRS})
 
-add_executable(tutorial-opt tools/tutorial-opt.cpp)
+add_executable(genseq-opt tools/genseq-opt.cpp)
 
-add_library(GenSeqVec STATIC
-  lib/Transforms/GenSeqVec.cpp
+add_library(NWVectorize STATIC
+  lib/GenSeq/NWVectorize.cpp
 )
 
 # add_library(AffineFullUnroll STATIC
@@ -41,21 +41,16 @@ get_property(dialect_libs GLOBAL PROPERTY MLIR_DIALECT_LIBS)
 get_property(conversion_libs GLOBAL PROPERTY MLIR_CONVERSION_LIBS)
 
 target_link_libraries(
-  tutorial-opt
+  genseq-opt
 
   PRIVATE
   ${dialect_libs}
   ${conversion_libs}
 
-  GenSeqVec
+  NWVectorize
 
-  # MLIRFuncDialect
-  # MLIRAffineDialect
-  # MLIRVectorDialect
-  # MLIRLLVMDialect
-  # MLIRArithDialect
-  # MLIRAffineUtils
-
+  MLIRPolygeist
+  MLIRPolygeistTransforms
 
   MLIRIR
   MLIRParser
@@ -64,7 +59,8 @@ target_link_libraries(
   MLIRTransforms  
 
   MLIROptLib
-  MLIRSupport
+  MLIRSupport  
+  MLIRFuncAllExtensions
 
   LLVMSupport
 )

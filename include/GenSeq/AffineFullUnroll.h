@@ -7,11 +7,10 @@
 #include "mlir/Pass/Pass.h"
 
 namespace mlir {
-namespace tutorial {
 
 class AffineFullUnrollPass
     : public PassWrapper<AffineFullUnrollPass,
-                        OperationPass<mlir::func::FuncOp>> {
+                        OperationPass<func::FuncOp>> {
 private:
     void runOnOperation() override;
 
@@ -22,7 +21,6 @@ private:
     }
 };
 
-}
 }
 
 #endif // LIB_TRANSFORM_AFFINE_AFFINEFULLUNROLL_H_
