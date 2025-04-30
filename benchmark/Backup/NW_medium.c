@@ -1,14 +1,13 @@
 #define LENGTH 512
-#define PAIRS 2048
+#define PAIRS 512
 
 #include<stdio.h>
 #include<stdlib.h>
-#include<stdint.h>
 #include<string.h>
 #include<time.h>
 
-
-void Needleman_Wunsch(int **A, int **B, int ***C) {
+void Needleman_Wunsch(int (*A)[PAIRS], int (*B)[PAIRS], int (*C)[LENGTH + 1][PAIRS]) {
+// void Needleman_Wunsch(int A[][PAIRS], int B[][PAIRS], int C[][LENGTH + 1][PAIRS]) {
     // initiation
     for (int i = 0; i < PAIRS; i++) {
         for (int j = 0; j < LENGTH + 1; j++) {
@@ -21,6 +20,9 @@ void Needleman_Wunsch(int **A, int **B, int ***C) {
     int temp2;
     int temp3;
     int max_value;
+
+    // printf("%d\n",A[0][0]);
+    // printf("%d\n",C[0][0][0]);
 
     for (int i = 0; i < PAIRS; i++) {
         for (int j = 1; j < LENGTH + 1; j++) {
@@ -52,40 +54,30 @@ void Needleman_Wunsch(int **A, int **B, int ***C) {
 }
 
 /*
-Command line argument ./NW.exe ./int_small/seqx.txt ./int_small/seqy.txt 64
 small 64
 medium 512
 large 2048
 */
 int main(int argc, char* argv[]) {
+    // int A[LENGTH][PAIRS];
+    // int B[LENGTH][PAIRS];
+    // int C[LENGTH+1][LENGTH+1][PAIRS];
 
-    int32_t **A = (int32_t **) malloc(LENGTH * sizeof(int32_t *));
-    int32_t **B = (int32_t **) malloc(LENGTH * sizeof(int32_t *));
 
-    for (int i = 0; i < LENGTH; i++)
-    {
-        A[i] = (int32_t *) malloc(PAIRS * 4);
-        B[i] = (int32_t *) malloc(PAIRS * 4);
-    }
+    int (*A)[PAIRS] = (int (*)[PAIRS]) malloc(LENGTH * PAIRS * sizeof(int));
+    int (*B)[PAIRS] = (int (*)[PAIRS]) malloc(LENGTH * PAIRS * sizeof(int));
 
-    int32_t ***C = (int32_t ***) malloc((LENGTH + 1) * sizeof(int32_t **));
-    for (int i = 0; i < LENGTH + 1; i++) 
-    {
-        C[i] = (int32_t **) malloc((LENGTH + 1) * sizeof(int32_t *));
-        for (int j = 0; j < LENGTH + 1; j++)
-        {
-            C[i][j] = (int32_t *) malloc(PAIRS * 4);
-        }
-    }
+    int (*C)[LENGTH + 1][PAIRS] = (int (*)[LENGTH + 1][PAIRS]) malloc((LENGTH + 1) * (LENGTH + 1) * PAIRS * sizeof(int));
+
 
     for (int i = 0; i < PAIRS; i++) {
         for (int j = 0; j < LENGTH; j++) {
             A[j][i] = rand();
             B[j][i] = rand();
         }
-    }    
-    
-    printf("Test Case Generated!\n");
+    }
+
+    printf("Initialization Success!\n");
 
     clock_t start, end;
     double cpu_time_used;
@@ -100,22 +92,8 @@ int main(int argc, char* argv[]) {
 
     printf("Success! Time used: %f\n", cpu_time_used);
 
-    for (int i = 0; i < LENGTH; i++)
-    {
-        free(A[i]);
-        free(B[i]);
-    }
     free(A);
     free(B);
-
-    for (int i = 0; i < LENGTH; i++)
-    {
-        for (int j = 0; j < LENGTH; j++)
-        {
-            free(C[i][j]);
-        }
-        free(C[i]);
-    }
     free(C);
 
     return 0;

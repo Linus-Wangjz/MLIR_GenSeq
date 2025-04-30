@@ -30,14 +30,32 @@ void collect_garbage(std::vector<mlir::Operation *> &garbage) {
 }
 
 void vectorize_ops(std::unordered_map<mlir::Operation *, mlir::OpResult> &map, std::vector<mlir::Operation *> &garbage, mlir::Operation *op, mlir::OpBuilder &builder) {
+    builder.setInsertionPoint(op); 
+    
+    // if (auto loadOp = mlir::dyn_cast<mlir::affine::AffineLoadOp>(op)) {
+    //     auto memRef = loadOp.getMemref();
+    //     auto vectorType = mlir::VectorType::get({8}, builder.getIntegerType(32));
+    //     auto indices = loadOp.getIndices();
+    //     const auto &loadOp_vec = builder.create<mlir::vector::LoadOp>(loadOp->getLoc(), vectorType, memRef, indices);
+    //     map[loadOp.getOperation()] = loadOp_vec->getResult(0);
+    //     // collect garbage
+    //     garbage.push_back(loadOp.getOperation());
+
     if (auto loadOp = mlir::dyn_cast<mlir::affine::AffineLoadOp>(op)) {
-        auto memRef = loadOp.getMemref();
-        auto vectorType = mlir::VectorType::get({8}, builder.getIntegerType(32));
-        auto indices = loadOp.getIndices();
-        const auto &loadOp_vec = builder.create<mlir::vector::LoadOp>(loadOp->getLoc(), vectorType, memRef, indices);
-        map[loadOp.getOperation()] = loadOp_vec->getResult(0);
-        // collect garbage
-        garbage.push_back(loadOp.getOperation());
+
+        // Ignore the non-innermost load
+        auto memrefTy = loadOp.getMemRefType();
+        if (memrefTy.getElementType().isIntOrFloat())
+        {
+
+            auto vectorType = mlir::VectorType::get({8}, builder.getIntegerType(32));
+            auto loadVec = builder.create<mlir::vector::LoadOp>(
+                                loadOp.getLoc(), vectorType,
+                                loadOp.getMemref(), loadOp.getIndices());
+        
+            map[loadOp.getOperation()] = loadVec->getResult(0);
+            garbage.push_back(loadOp);
+        }
     } else if (auto addiOp = mlir::dyn_cast<mlir::arith::AddIOp>(op)) {
         auto op1 = addiOp.getOperand(0);
         auto op2 = addiOp.getOperand(1);
