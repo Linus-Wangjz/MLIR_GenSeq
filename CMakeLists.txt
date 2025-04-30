@@ -48,10 +48,7 @@ target_link_libraries(
   ${conversion_libs}
 
   NWVectorize
-
-  MLIRPolygeist
-  MLIRPolygeistTransforms
-
+  
   MLIRIR
   MLIRParser
 

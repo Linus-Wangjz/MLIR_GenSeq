@@ -3,25 +3,24 @@
 set -e
 
 # Sample usage
-:'
-    Usage: ./compile_nw_opt.sh --llvm-dir=/path/to/llvm-project --polygeist-dir=/path/to/polygeist --input=NW_C_FILE --output-dir=NW_EXE_DIR
-    In the output directory, you will find the following files:
-    - NW.mlir: MLIR representation of the input C file
-    - NW_pass.mlir: MLIR representation after applying the pass
-    - NW_pass_llvm.mlir: MLIR representation after lowering to LLVM dialect
-    - NW_pass.ll: LLVM IR representation
-    - NW_pass.exe: Executable generated from the LLVM IR
-    - NW_pass.s: Assembly representation of the vectorized executable
-    - NW_orig.s: Assembly representation of the original executable
-    - NW_orig.exe: Executable generated from the original C file
-'
-
+# '
+#   Usage: ./compile_nw_opt.sh --llvm-dir=/path/to/llvm-project --polygeist-dir=/path/to/polygeist --input=NW_C_FILE --output-dir=NW_EXE_DIR
+#   In the output directory, you will find the following files:
+#   - NW.mlir: MLIR representation of the input C file
+#   - NW_pass.mlir: MLIR representation after applying the pass
+#   - NW_pass_llvm.mlir: MLIR representation after lowering to LLVM dialect
+#   - NW_pass.ll: LLVM IR representation
+#   - NW_pass.exe: Executable generated from the LLVM IR
+#   - NW_pass.s: Assembly representation of the vectorized executable
+#   - NW_orig.s: Assembly representation of the original executable
+#   - NW_orig.exe: Executable generated from the original C file
+# '
 
 # Default paths (can be overridden by command line arguments)
 LLVM_PROJECT_DIR="$HOME/Documents/llvm-project"
 POLYGEIST_DIR="$HOME/Documents/Polygeist"
 INPUT_FILE=""
-OUTPUT_DIR="./benchmark"
+OUTPUT_DIR="./output"
 
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
@@ -78,36 +77,47 @@ mkdir -p "$OUTPUT_DIR"
 # Extract filename without extension
 FILENAME=$(basename "$INPUT_FILE" .c)
 
+LLVM_PROJECT_DIR="${LLVM_PROJECT_DIR/#\~/$HOME}"
+POLYGEIST_DIR="${POLYGEIST_DIR/#\~/$HOME}"
 # Set paths
 LLVM_BUILD_DIR="$LLVM_PROJECT_DIR/build"
 POLYGEIST_BUILD_DIR="$POLYGEIST_DIR/build"
 
 echo "=== Setting up environment ==="
 # Set include path for stddef.h
-export C_INCLUDE_PATH="$LLVM_BUILD_DIR/lib/clang/14.0.6/include"
-export CPLUS_INCLUDE_PATH="$LLVM_BUILD_DIR/lib/clang/14.0.6/include"
+export C_INCLUDE_PATH="$LLVM_BUILD_DIR/lib/clang/18/include"
+export C_INCLUDE_PATH=$(ls -d "$LLVM_BUILD_DIR"/lib/clang/*/include | head -n1)
+# export CPLUS_INCLUDE_PATH="$LLVM_BUILD_DIR/lib/clang/14.0.6/include"
 
 echo "=== Converting C to Affine Dialect MLIR ==="
 "$POLYGEIST_BUILD_DIR/bin/cgeist" "$INPUT_FILE" -S -O0 -raise-scf-to-affine > "$OUTPUT_DIR/${FILENAME}.mlir"
 echo "Generated: $OUTPUT_DIR/${FILENAME}.mlir"
 
+# echo "=== Compiling the pass ==="
+# mkdir -p build && cd build
+# cmake -G Ninja .. -DLLVM_DIR="$LLVM_BUILD_DIR/lib/cmake/llvm" \
+#   -DMLIR_DIR="$LLVM_BUILD_DIR/lib/cmake/mlir" \
+#   -DCMAKE_EXPORT_COMPILE_COMMANDS=1
+
+# cmake --build . --target vec-opt
+# cd ..
+
 echo "=== Compiling the pass ==="
 mkdir -p build && cd build
-cmake -G Ninja .. -DLLVM_DIR="$LLVM_BUILD_DIR/lib/cmake/llvm" \
-  -DMLIR_DIR="$LLVM_BUILD_DIR/lib/cmake/mlir" \
-  -DCMAKE_EXPORT_COMPILE_COMMANDS=1
-
-cmake --build . --target vec-opt
+cmake .. -G Ninja -DCMAKE_INSTALL_PREFIX="$LLVM_BUILD_DIR"
+ninja
 cd ..
 
 echo "=== Running the pass ==="
-./build/bin/vec-opt "$OUTPUT_DIR/${FILENAME}.mlir" > "$OUTPUT_DIR/${FILENAME}_pass.mlir"
+./build/genseq-opt --nw-vectorize -allow-unregistered-dialect "$OUTPUT_DIR/${FILENAME}.mlir" > "$OUTPUT_DIR/${FILENAME}_pass.mlir"
 echo "Generated: $OUTPUT_DIR/${FILENAME}_pass.mlir"
 
 echo "=== Lowering to LLVM dialect ==="
 "$LLVM_BUILD_DIR/bin/mlir-opt" --lower-affine --convert-vector-to-llvm="enable-x86vector" \
-  --convert-scf-to-cf --convert-to-llvm --reconcile-unrealized-casts \
-  "$OUTPUT_DIR/${FILENAME}_pass.mlir" > "$OUTPUT_DIR/${FILENAME}_pass_llvm.mlir"
+  --convert-scf-to-cf --convert-to-llvm -allow-unregistered-dialect \
+  "$OUTPUT_DIR/${FILENAME}_pass.mlir" > "$OUTPUT_DIR/${FILENAME}_pass_imm.mlir"
+"$POLYGEIST_BUILD_DIR/bin/polygeist-opt" --convert-polygeist-to-llvm \
+  "$OUTPUT_DIR/${FILENAME}_pass_imm.mlir" > "$OUTPUT_DIR/${FILENAME}_pass_llvm.mlir"
 echo "Generated: $OUTPUT_DIR/${FILENAME}_pass_llvm.mlir"
 
 echo "=== Translating to LLVM IR ==="
@@ -119,16 +129,23 @@ echo "=== Compiling to executable ==="
 "$LLVM_BUILD_DIR/bin/clang" -O3 -mavx2 "$OUTPUT_DIR/${FILENAME}_pass.ll" -o "$OUTPUT_DIR/${FILENAME}_pass.exe"
 echo "Generated: $OUTPUT_DIR/${FILENAME}_pass.exe"
 
+echo "=== Compiling original for comparison ==="
+"$LLVM_BUILD_DIR/bin/clang" -O3 -mavx2 "$INPUT_FILE" -o "$OUTPUT_DIR/${FILENAME}_orig.exe"
+echo "Generated: $OUTPUT_DIR/${FILENAME}_orig.exe"
+
+echo "=== Running benchmark ===" 
+echo "You can now compare the performance of:"
+echo "Vectorized version:"
+"$OUTPUT_DIR/${FILENAME}_pass.exe"
+echo "Original version:"
+"$OUTPUT_DIR/${FILENAME}_orig.exe"
+
 echo "=== Generating assembly ==="
 "$LLVM_BUILD_DIR/bin/clang" -S -mavx2 "$OUTPUT_DIR/${FILENAME}_pass.ll" -o "$OUTPUT_DIR/${FILENAME}_pass.s"
 "$LLVM_BUILD_DIR/bin/clang" -S -mavx2 "$INPUT_FILE" -o "$OUTPUT_DIR/${FILENAME}_orig.s"
 echo "Generated: $OUTPUT_DIR/${FILENAME}_pass.s and $OUTPUT_DIR/${FILENAME}_orig.s"
 
-echo "=== Compiling original for comparison ==="
-"$LLVM_BUILD_DIR/bin/clang" -O3 -mavx2 "$INPUT_FILE" -o "$OUTPUT_DIR/${FILENAME}_orig.exe"
-echo "Generated: $OUTPUT_DIR/${FILENAME}_orig.exe"
-
 echo "=== All steps completed successfully ==="
-echo "You can now compare the performance of:"
-echo "  $OUTPUT_DIR/${FILENAME}_pass.exe (vectorized)"
-echo "  $OUTPUT_DIR/${FILENAME}_orig.exe (original)"
+# echo "You can now compare the performance of:"
+# echo "  $OUTPUT_DIR/${FILENAME}_pass.exe (vectorized)"
+# echo "  $OUTPUT_DIR/${FILENAME}_orig.exe (original)"
