@@ -1,5 +1,5 @@
 #define LENGTH 512
-#define PAIRS 2048
+#define PAIRS 10240
 
 #include<stdio.h>
 #include<stdlib.h>
