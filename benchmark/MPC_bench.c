@@ -1,6 +1,6 @@
 #define LENGTH 512
 #ifndef PAIRS
-#define PAIRS 512
+#define PAIRS 2048
 #endif
 
 #include<stdio.h>
@@ -104,7 +104,7 @@ int main(int argc, char* argv[]) {
 
     cpu_time_used = ((double)(end-start))/CLOCKS_PER_SEC;
 
-    printf("Time used on Needleman_Wunsch() function: %f\n", cpu_time_used);
+    printf("Time used on Min_Cost_Path() function: %f\n", cpu_time_used);
 
     for (int i = 0; i < LENGTH; i++)
     {
