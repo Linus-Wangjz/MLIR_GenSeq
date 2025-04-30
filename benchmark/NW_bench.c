@@ -44,13 +44,6 @@ void Needleman_Wunsch(int **A, int **B, int ***C) {
                 temp2 = C[j][k - 1][i] - 5;
                 temp3 = C[j - 1][k - 1][i];
                 temp3 = temp3 - (A[j - 1][i] == B[j - 1][i]) * scale + offset; 
-                // if (A[i][j - 1] == B[i][j - 1]) {
-                //     temp3 += 2;
-                // } else {
-                //     temp3 -= 5;
-                // }
-                // max_value = max(temp1,temp2);
-                // max_value = max(max_value, temp3);
                 max_value = temp1;
                 if (max_value < temp2) {
                     max_value = temp2;
